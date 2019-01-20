@@ -1,90 +1,184 @@
-var gulp          = require('gulp');
-var sass          = require('gulp-sass');
-var watch         = require('gulp-watch');
-var browserSync   = require('browser-sync');
-var csso          = require('gulp-csso');
-var postcss       = require('gulp-postcss');
-var autoprefixer  = require('autoprefixer');
-var webpack       = require('webpack');
-var webpackStream = require('webpack-stream-fixed');
+/* global require: false, Buffer: false */
+var config = require( './gulpconfig.json' ),
+	tasks = {
+		js: [],
+		less: [],
+		svg: [],
+		colors: [],
+	},
+	through = require( 'through2' ),
+	// exec = require( 'child_process' ).exec,
+	gulp = require( 'gulp' ),
+	// gulpDebug = require( 'gulp-debug' ),
+	touch = require( 'gulp-touch' ),
+	plumber = require( 'gulp-plumber' ),
+	gutil = require( 'gulp-util' ),
+	notify = require( 'gulp-notify' ),
+	rename = require( 'gulp-rename' ),
+	less = require( 'gulp-less' ),
+	include = require( 'gulp-include' ),
+	rename = require( 'gulp-rename' ),
+	LessPluginAutoPrefix = require( 'less-plugin-autoprefix' ),
+	CombineMediaQueries = require( 'less-plugin-group-css-media-queries' ),
+	zip = require( 'gulp-zip' ),
+	wpPot = require( 'gulp-wp-pot' ),
+	Autoprefix = new LessPluginAutoPrefix( { browsers: [ '> 5%', 'last 2 versions', 'Firefox ESR', 'not ie < 10' ], remove: false } ),
+	LessPlugins = [ CombineMediaQueries, Autoprefix ];
 
-function swallowError (error) {
-    //Prints details of the error in the console
-    console.log(error.toString());
-    this.emit('end')
+for ( var group in config.build.less ) {
+	tasks.less.push( 'build:less:' + group );
 }
 
-gulp.task('sass', function() {
-    gulp.src('./assets/scss/app/app.scss')
-        .pipe(sass())
-        .on('error', swallowError)
-        .pipe(postcss([ autoprefixer() ]))
-        .pipe(gulp.dest('./public/css'))
-        //For auto injecting the CSS into the browser. 
-        .pipe(browserSync.stream({match: '**/*.css'}));
-});
+for ( var group in config.build.js ) {
+	tasks.js.push( 'build:js:' + group );
+}
 
-gulp.task('sass-vendor', function() {
-    gulp.src('./assets/scss/vendor/vendor.scss')
-        .pipe(sass())
-        .pipe(gulp.dest('./public/css'))
-        .pipe(browserSync.stream({match: '**/*.css'}));
-});
+tasks.less.forEach( function( task ) {
+	'use strict';
 
-gulp.task('webpack', function() {
-return gulp.src('./assets/js/app/app.js')
-    .pipe(webpackStream( require('./webpack.config.js'), webpack ))
-    .on('error', swallowError)
-    .pipe(gulp.dest('./public/js'));
-});
+	gulp.task( task, function( done ) {
+		var group = task.split( ':' ).pop();
 
-gulp.task('production', function() {
-    //Setting ENV to production so Webpack will minify JS files. 
-    process.env.NODE_ENV = 'production';
-    gulp.src('./assets/js/app/app.js')
-        .pipe(webpackStream( require('./webpack.config.js'), webpack ))
-        .pipe(gulp.dest('./public/js'));
+		for ( var src in config.build.less[ group ] ) {
+			var pipeline = gulp.src( src )
+				.pipe( plumber( {
+					errorHandler: notify.onError( {
+						title: 'Error running ' + task,
+						message: '<%= error.message %>'
+					} ) }
+				) )
+				.pipe( less( { plugins: LessPlugins } ) )
+				.pipe( rename( src.split( '/' ).pop().replace( '.less', '.css' ) ) )
+			;
+			config.build.less[ group ][ src ].forEach( function( path ) {
+				pipeline.pipe( gulp.dest( path ) )
+				.pipe( touch() );
+			} );
+		}
 
-    gulp.src('./public/css/app.css')
-        .pipe(csso())
-        .pipe(gulp.dest('./public/css'));
+		done();
+	} );
+} );
+gulp.task( 'build:less', gulp.parallel( tasks.less ) );
 
-    gulp.src('./public/css/vendor.css')
-        .pipe(csso())
-        .pipe(gulp.dest('./public/css'));
-});
+tasks.js.forEach( function( task ) {
+	'use strict';
 
+	gulp.task( task, function( done ) {
+		var group = task.split(':').pop();
 
-gulp.task('watch', function () {
-    //Webpack will watch the asser files. All we need is to watch the compiled files.
-    gulp.watch('./public/js/*.js').on('change', browserSync.reload);
-    gulp.watch(['./assets/scss/app/*.scss', './assets/src/scss/app/components/*.scss'], ['sass']);
-    gulp.watch(['./assets/scss/vendor/vendor.scss'], ['sass-vendor']);
-});
+		for ( var src in config.build.js[ group ] ) {
+			var pipeline = gulp.src( src )
+				.pipe( plumber( {
+					errorHandler: notify.onError( {
+						title: 'Error running ' + task,
+						message: "<%= error.message %> in line no. <%= error.lineNumber %>"
+					} )
+				} ) )
+				.pipe( include() )
+				.pipe( rename( src.split( '/' ).pop() ) )
+			;
 
+			config.build.js[ group ][ src ].forEach( function( path ) {
+				pipeline.pipe( gulp.dest( path ) );
+			} );
+		}
 
-gulp.task('sync', function() {
-    var options = {
-        proxy: 'wordvueplay.dev',
-        port: 3000,
-        files: [
-            '**/*.php'
-        ],
-        ghostMode: {
-            clicks: false,
-            location: false,
-            forms: false,
-            scroll: false
-        },
-        injectChanges: true,
-        logFileChanges: true,
-        logLevel: 'debug',
-        logPrefix: 'gulp-patterns',
-        notify: true,
-        reloadDelay: 0,
-    };
-    browserSync(options);
-});
-  
-gulp.task('default', ['webpack', 'sass', 'sass-vendor', 'watch', 'sync']);
-  
+		done();
+	} );
+} );
+gulp.task( 'build:js', gulp.parallel( tasks.js ) );
+
+gulp.task( 'zip:wordpressorg', function() {
+	'use strict';
+
+	return gulp.src( [
+		'./**/*',
+		'!*.DS_Store',
+		'!.git/**',
+		'!*.git',
+		'!*.jshintrc',
+		'!gulpconfig.json',
+		'!gulpfile.js',
+		'!package.json',
+		'!languages/**',
+		'!languages',
+		'!node_modules/**',
+		'!node_modules',
+		'!npm-debug.log',
+		'!dist/**',
+		'!dist',
+		'!source/**',
+		'!source',
+	] )
+		.pipe( zip( 'pine.zip' ) )
+		.pipe( gulp.dest( 'dist/wordpressorg' ) );
+} );
+
+gulp.task( 'makepot:default', function() {
+	'use strict';
+
+	return gulp.src( [
+			'./**/*.php',
+			'!dev/**',
+			'!node_modules/**',
+			'!.git/**',
+			'!lib/acf/**',
+		] )
+		.pipe( wpPot( {
+			domain: 'pine',
+			package: 'Pine 1.0.8',
+			bugReport: 'https://wordpress.org/support/theme/pine',
+			lastTranslator: 'Themejack <support@themejack.com>',
+			team: 'Themejack <support@themejack.com>',
+		} ) )
+		.pipe( through.obj( function( file, enc, callback ) {
+				if ( file.isNull() ) {
+					return callback( null, file );
+				}
+
+				if ( file.isStream() ) {
+					return callback( null, file );
+				}
+
+				if ( file.isBuffer() ) {
+					var content = file.contents.toString();
+					var lines = content.split( '\n' );
+
+					lines.splice( 0, 2 );
+
+					content = `# Copyright (C) 2017 Themejack
+# This file is distributed under the GNU General Public License v2 or later.
+` + lines.join( '\n' );
+
+					file.contents = new Buffer( content );
+
+					this.push( file );
+				}
+
+				callback();
+		} ) )
+		.pipe( gulp.dest( 'languages/pine.pot' ) );
+} );
+
+function watch() {
+	'use strict';
+
+	config.watch.forEach( function( obj ) {
+		for ( var group in obj.build ) {
+			gutil.log( gutil.colors.cyan( 'Watching ' + obj.files ) );
+
+			gulp.watch( obj.files, gulp.series(
+				'build:' + group + ':' + obj.build[ group ]
+			) );
+		}
+	} );
+}
+
+gulp.task( 'default', gulp.parallel( [ 'build:less', 'build:js' ] ) );
+gulp.task( 'build', gulp.parallel( [ 'build:less', 'build:js' ] ) );
+gulp.task( 'build:all', gulp.parallel( [ 'build:less', 'build:js' ] ) );
+gulp.task( 'makepot', gulp.series( [ 'makepot:default' ] ) );
+gulp.task( 'watch', watch );
+gulp.task( 'init', gulp.parallel( [ 'build:less', 'build:js' ] ) );
+gulp.task( 'zip', gulp.series( [ 'init', 'makepot', 'zip:wordpressorg' ] ) );

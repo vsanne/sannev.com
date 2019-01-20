@@ -1,9 +1,9 @@
 #!/bin/bash
 
-domains=(thilak.nl www.thilak.nl)
+domains=(sannev.com www.sannev.com)
 rsa_key_size=4096
 data_path="./data/certbot"
-email="npspam@thilak.nl"
+email="npspam@sannev.com"
 staging=0 # Set to 1 if you're testing your setup to avoid hitting request limits
 
 if [ -d "$data_path" ]; then
