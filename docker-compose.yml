@@ -8,20 +8,20 @@ services:
     container_name: sannev_wp
     restart: always
     depends_on:
-      - db
+      - sannev_db
     networks:
       - wp-network
     ports:
       - 8001:80
     environment:
-      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_HOST: sannev_db
       WORDPRESS_DB_USER: dev_user_sannev
       WORDPRESS_DB_PASSWORD: supersecret
       WORDPRESS_DB_NAME: wp_dev_sannev
 
-  db:
+  sannev_db:
     image: mysql:5.7
-    container_name: mysql_db
+    container_name: sannev_db
     restart: always
     networks:
       - wp-network
