@@ -7,6 +7,10 @@
 - **` gulp`** - Will compile, start BrowserSync and watch for any changes.
 - **`gulp production`** - Will compile and minify assets.
 
+## Environment Variables
+You need to setup these environment variables before running the project.
+- **`MYSQL_ROOT_PASSWORD`**
+
 ## Built using
 - Wordpress
 - Docker
