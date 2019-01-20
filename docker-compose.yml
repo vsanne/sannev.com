@@ -8,6 +8,8 @@ services:
     image: trao/wordpress
     container_name: wordpress
     restart: always
+    depends_on:
+      - db
     networks:
       - wp-network
     ports:
@@ -36,6 +38,9 @@ services:
     image: nginx:latest
     container_name: nginx_reverse_proxy
     restart: always
+    depends_on:
+      - wordpress
+      - certbot
     networks:
       - wp-network
     volumes:
