@@ -2,15 +2,14 @@
 version: '3.1'
 
 services:
-
-  sannev:
+  sannev_wp:
     build: .
     container_name: sannev_wp
     restart: always
     depends_on:
       - sannev_db
     networks:
-      - wp-network
+      - sannev-network
     ports:
       - 8001:80
     environment:
@@ -24,18 +23,18 @@ services:
     container_name: sannev_db
     restart: always
     networks:
-      - wp-network
+      - sannev-network
     environment:
       MYSQL_DATABASE: wp_dev_sannev
       MYSQL_USER: dev_user_sannev
       MYSQL_PASSWORD: supersecret
       MYSQL_RANDOM_ROOT_PASSWORD: '1'
     volumes:
-      - db-volume:/var/lib/mysql
+      - sannev_db-volume:/var/lib/mysql
 
 volumes:
-  db-volume:
+  sannev_db-volume:
     driver: local
 
 networks:
-  wp-network:
+  sannev-network:
