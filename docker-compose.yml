@@ -9,7 +9,7 @@ services:
     depends_on:
       - sannev_db
     networks:
-      - sannev-network
+      - proxy_nginx
     ports:
       - 8001:80
     environment:
@@ -23,7 +23,7 @@ services:
     container_name: sannev_db
     restart: always
     networks:
-      - sannev-network
+      - proxy_nginx
     environment:
       MYSQL_DATABASE: wp_dev_sannev
       MYSQL_USER: dev_user_sannev
@@ -37,4 +37,5 @@ volumes:
     driver: local
 
 networks:
-  sannev-network:
+  proxy_nginx:
+    external: true
