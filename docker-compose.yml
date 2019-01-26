@@ -1,40 +1,19 @@
 # don't store production credentials
-version: '3.1'
+version: '3.7'
 
 services:
-  sannev_wp:
+  sanne:
     build: .
     container_name: sannev_wp
     restart: always
-    depends_on:
-      - sannev_db
     networks:
       - proxy_nginx
     ports:
       - 8001:80
     environment:
-      WORDPRESS_DB_HOST: sannev_db
-      WORDPRESS_DB_USER: dev_user_sannev
-      WORDPRESS_DB_PASSWORD: supersecret
-      WORDPRESS_DB_NAME: wp_dev_sannev
-
-  sannev_db:
-    image: mysql:5.7
-    container_name: sannev_db
-    restart: always
-    networks:
-      - proxy_nginx
-    environment:
-      MYSQL_DATABASE: wp_dev_sannev
-      MYSQL_USER: dev_user_sannev
-      MYSQL_PASSWORD: supersecret
-      MYSQL_RANDOM_ROOT_PASSWORD: '1'
-    volumes:
-      - sannev_db-volume:/var/lib/mysql
-
-volumes:
-  sannev_db-volume:
-    driver: local
+      WORDPRESS_DB_HOST: mysql
+      WORDPRESS_DB_NAME: sannedb
+      WORDPRESS_DB_PASSWORD: 'super_secret'
 
 networks:
   proxy_nginx:
