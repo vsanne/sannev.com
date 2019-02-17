@@ -1,6 +1,5 @@
-version: '3.6'
+version: '3.7'
 services:
-
   wp_sanne:
     image: wordpress:${WORDPRESS_VERSION}
     container_name: wp_sanne
@@ -23,3 +22,8 @@ networks:
 volumes:
   wp_sanne_data:
     name: wp_sanne_data
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: ${PWD}${WORDPRESS_DATA_DIR}

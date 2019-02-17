@@ -1,5 +1,11 @@
 .env*
 .idea/
-/wp_sanne
+/wordpress/*
 !example.env
 !nginx/default*
+!/wordpress/wp-content/
+/wordpress/wp-content/*
+!/wordpress/wp-content/themes/
+/wordpress/wp-content/themes/*
+!/wordpress/wp-content/plugins/
+/wordpress/wp-content/plugins/*
