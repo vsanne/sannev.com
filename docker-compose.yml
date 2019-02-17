@@ -1,20 +1,21 @@
-# don't store production credentials
-version: '3.7'
-
+version: '3.6'
 services:
-  sanne:
-    build: .
-    container_name: sannev_wp
-    restart: always
-    networks:
-      - proxy_nginx
-    ports:
-      - 8001:80
+
+  wp_sanne:
+    image: wordpress:${WP_SANNE_VERSION}
+    container_name: wp_sanne
+    volumes:
+      - ${WP_SANNE_DATA_DIR}:/var/www/html
     environment:
-      WORDPRESS_DB_HOST: mysql
-      WORDPRESS_DB_NAME: sannedb
-      WORDPRESS_DB_PASSWORD: 'super_secret'
+      - WORDPRESS_DB_NAME=${WP_SANNE_DB_NAME}
+      - WORDPRESS_TABLE_PREFIX=${WP_SANNE_TABLE_PREFIX}
+      - WORDPRESS_DB_HOST=${WP_SANNE_DB_HOST}
+      - WORDPRESS_DB_USER=${WP_SANNE_DB_USER}
+      - WORDPRESS_DB_PASSWORD=${WP_SANNE_DB_PASSWORD}
+    networks:
+      - reverse_proxy
+    restart: always
 
 networks:
-  proxy_nginx:
+  reverse_proxy:
     external: true
