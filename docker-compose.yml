@@ -1,4 +1,5 @@
 version: '3.7'
+
 services:
   wp_sanne:
     image: wordpress:php7.3-fpm
@@ -18,12 +19,3 @@ services:
 networks:
   wp_sanne_net:
     name: wp_sanne_net
-
-volumes:
-  wp_sanne_data:
-    name: wp_sanne_data
-    driver: local
-    driver_opts:
-      type: 'none'
-      o: 'bind'
-      device: ${PWD}${WORDPRESS_DATA_DIR}

@@ -1,0 +1,10 @@
+version: '3.7'
+
+volumes:
+  wp_sanne_data:
+    name: wp_sanne_data
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: /mnt/volume_ams3_02/wp_sanne
