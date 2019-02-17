@@ -1,5 +1,6 @@
 .env*
 .idea/
+/mysql/*
 /wordpress/*
 !example.env
 !nginx/default*
