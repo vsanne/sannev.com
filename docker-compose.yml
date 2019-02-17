@@ -2,20 +2,24 @@ version: '3.6'
 services:
 
   wp_sanne:
-    image: wordpress:${WP_SANNE_VERSION}
+    image: wordpress:${WORDPRESS_VERSION}
     container_name: wp_sanne
     volumes:
-      - ${WP_SANNE_DATA_DIR}:/var/www/html
+      - wp_sanne_data:/var/www/html
     environment:
-      - WORDPRESS_DB_NAME=${WP_SANNE_DB_NAME}
-      - WORDPRESS_TABLE_PREFIX=${WP_SANNE_TABLE_PREFIX}
-      - WORDPRESS_DB_HOST=${WP_SANNE_DB_HOST}
-      - WORDPRESS_DB_USER=${WP_SANNE_DB_USER}
-      - WORDPRESS_DB_PASSWORD=${WP_SANNE_DB_PASSWORD}
+      - WORDPRESS_DB_NAME=${WORDPRESS_DB_NAME}
+      - WORDPRESS_TABLE_PREFIX=${WORDPRESS_TABLE_PREFIX}
+      - WORDPRESS_DB_HOST=${WORDPRESS_DB_HOST}
+      - WORDPRESS_DB_USER=${WORDPRESS_DB_USER}
+      - WORDPRESS_DB_PASSWORD=${WORDPRESS_DB_PASSWORD}
     networks:
-      - reverse_proxy
+      - wp_sanne_net
     restart: always
 
 networks:
-  reverse_proxy:
-    external: true
+  wp_sanne_net:
+    name: wp_sanne_net
+
+volumes:
+  wp_sanne_data:
+    name: wp_sanne_data
